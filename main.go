@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/veandco/go-sdl2/img"
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/ttf"
 	"os"
@@ -34,7 +33,7 @@ func run() error {
 	}
 	defer w.Destroy()
 
-	if err := drawTitle(r); err != nil {
+	if err := drawTitle(r, "Flappy Gopher"); err != nil {
 		return fmt.Errorf("Could not draw title: %v", err)
 	}
 
@@ -42,17 +41,28 @@ func run() error {
 	sdl.PumpEvents()
 
 	fmt.Println("Print title")
-	time.Sleep(5 * time.Second)
+	time.Sleep(1 * time.Second)
 
-	if err := drawBackground(r); err != nil {
-		return fmt.Errorf("Could not draw background: %v", err)
+	fmt.Println("Render scene")
+	scene, err := newScene(r)
+	if err != nil {
+		return fmt.Errorf("Could not create scene: %v", err)
 	}
-	time.Sleep(5 * time.Second)
+	defer scene.destroy()
 
-	return nil
+	events := make(chan sdl.Event)
+	errc := scene.run(events, r)
+
+	for {
+		select {
+		case events <- sdl.WaitEvent():
+		case err := <-errc:
+			return err
+		}
+	}
 }
 
-func drawTitle(r *sdl.Renderer) error {
+func drawTitle(r *sdl.Renderer, text string) error {
 	r.Clear()
 
 	font, err := ttf.OpenFont("res/fonts/flappy-font.ttf", 20)
@@ -62,7 +72,7 @@ func drawTitle(r *sdl.Renderer) error {
 	defer font.Close()
 
 	color := sdl.Color{R: 255, G: 0, B: 0, A: 255}
-	surface, err := font.RenderUTF8Solid("Flappy Gopher", color)
+	surface, err := font.RenderUTF8Solid(text, color)
 	if err != nil {
 		return fmt.Errorf("Could not render text: %v", err)
 	}
@@ -71,24 +81,6 @@ func drawTitle(r *sdl.Renderer) error {
 	texture, err := r.CreateTextureFromSurface(surface)
 	if err != nil {
 		return fmt.Errorf("Could not create texture: %v", err)
-	}
-	defer texture.Destroy()
-
-	if err := r.Copy(texture, nil, nil); err != nil {
-		return fmt.Errorf("Could not copy texture: %v", err)
-	}
-
-	r.Present()
-
-	return nil
-}
-
-func drawBackground(r *sdl.Renderer) error {
-	r.Clear()
-
-	texture, err := img.LoadTexture(r, "res/img/background.jpg")
-	if err != nil {
-		return fmt.Errorf("Could not load background: %v", err)
 	}
 	defer texture.Destroy()
 
