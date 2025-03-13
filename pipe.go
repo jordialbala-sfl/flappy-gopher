@@ -2,44 +2,39 @@ package main
 
 import (
 	"fmt"
-	"github.com/veandco/go-sdl2/img"
 	"github.com/veandco/go-sdl2/sdl"
+	"math/rand"
 	"sync"
 )
 
 type pipe struct {
 	mu sync.RWMutex
 
-	texture *sdl.Texture
-
-	x, h, w, speed int32
-	inverted       bool
+	x, h, w  int32
+	inverted bool
 }
 
-func newPipe(r *sdl.Renderer) (*pipe, error) {
-	texture, err := img.LoadTexture(r, "res/img/pipe.png")
-	if err != nil {
-		return nil, fmt.Errorf("Could not load pipe texture: %v", err)
-	}
-
+func newPipe() *pipe {
 	return &pipe{
-		texture:  texture,
-		x:        400,
-		h:        300,
+		x:        800,
+		h:        200 + rand.Int31n(200),
 		w:        50,
-		speed:    1,
-		inverted: true,
-	}, nil
+		inverted: rand.Float32() > 0.5,
+	}
 }
 
-func (p *pipe) update() {
+func (p *pipe) update(speed int32) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	p.x -= p.speed
+	p.x -= speed
 }
 
-func (p *pipe) paint(r *sdl.Renderer) error {
+func (p *pipe) touch(b *bird) {
+	b.touch(p)
+}
+
+func (p *pipe) paint(r *sdl.Renderer, texture *sdl.Texture) error {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 
@@ -50,21 +45,9 @@ func (p *pipe) paint(r *sdl.Renderer) error {
 		flip = sdl.FLIP_VERTICAL
 	}
 
-	if err := r.CopyEx(p.texture, nil, rect, 0, nil, flip); err != nil {
+	if err := r.CopyEx(texture, nil, rect, 0, nil, flip); err != nil {
 		return fmt.Errorf("Could not copy pipe: %v", err)
 	}
 
 	return nil
-}
-
-func (p *pipe) restart() {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-}
-
-func (p *pipe) destroy() {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	p.texture.Destroy()
 }
