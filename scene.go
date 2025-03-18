@@ -109,6 +109,8 @@ func (s *scene) handleEvent(event sdl.Event) bool {
 		if key == sdl.K_SPACE && t == sdl.KEYDOWN {
 			s.bird.jump()
 		}
+	case *sdl.MouseButtonEvent:
+		s.bird.jump()
 	}
 
 	return false

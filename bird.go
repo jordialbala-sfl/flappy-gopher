@@ -9,7 +9,7 @@ import (
 )
 
 const gravity = 0.1
-const jumpSpeed = 7
+const jumpSpeed = 6
 
 type bird struct {
 	mu sync.RWMutex

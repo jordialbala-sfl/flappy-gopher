@@ -37,9 +37,6 @@ func run() error {
 		return fmt.Errorf("Could not draw title: %v", err)
 	}
 
-	sdl.PumpEvents()
-	sdl.PumpEvents()
-
 	fmt.Println("Print title")
 	time.Sleep(1 * time.Second)
 
